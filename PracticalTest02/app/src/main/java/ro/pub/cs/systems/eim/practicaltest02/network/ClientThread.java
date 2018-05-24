@@ -15,18 +15,16 @@ public class ClientThread extends Thread {
 
     private String address;
     private int port;
-    private String city;
-    private String informationType;
-    private TextView weatherForecastTextView;
+    private String urlAddress;
+    private TextView bodyTextView;
 
     private Socket socket;
 
-    public ClientThread(String address, int port, String city, String informationType, TextView weatherForecastTextView) {
+    public ClientThread(String address, int port, String urlAddress, TextView bodyTextView) {
         this.address = address;
         this.port = port;
-        this.city = city;
-        this.informationType = informationType;
-        this.weatherForecastTextView = weatherForecastTextView;
+        this.urlAddress = urlAddress;
+        this.bodyTextView = bodyTextView;
     }
 
     @Override
@@ -43,17 +41,15 @@ public class ClientThread extends Thread {
                 Log.e(Constants.TAG, "[CLIENT THREAD] Buffered Reader / Print Writer are null!");
                 return;
             }
-            printWriter.println(city);
+            printWriter.println(urlAddress);
             printWriter.flush();
-            printWriter.println(informationType);
-            printWriter.flush();
-            String weatherInformation;
-            while ((weatherInformation = bufferedReader.readLine()) != null) {
-                final String finalizedWeateherInformation = weatherInformation;
-                weatherForecastTextView.post(new Runnable() {
+            String bodyInformation;
+            while ((bodyInformation = bufferedReader.readLine()) != null) {
+                final String finalizedBodyInformation = bodyInformation;
+                bodyTextView.post(new Runnable() {
                    @Override
                     public void run() {
-                       weatherForecastTextView.setText(finalizedWeateherInformation);
+                       bodyTextView.setText(finalizedBodyInformation);
                    }
                 });
             }

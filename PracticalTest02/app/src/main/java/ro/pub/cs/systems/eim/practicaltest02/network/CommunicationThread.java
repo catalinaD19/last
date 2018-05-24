@@ -28,7 +28,8 @@ import cz.msebera.android.httpclient.message.BasicNameValuePair;
 import cz.msebera.android.httpclient.protocol.HTTP;
 import ro.pub.cs.systems.eim.practicaltest02.general.Constants;
 import ro.pub.cs.systems.eim.practicaltest02.general.Utilities;
-import ro.pub.cs.systems.eim.practicaltest02.model.WeatherForecastInformation;
+import ro.pub.cs.systems.eim.practicaltest02.model.URLInformation;
+
 
 public class CommunicationThread extends Thread {
 
@@ -54,23 +55,23 @@ public class CommunicationThread extends Thread {
                 return;
             }
             Log.i(Constants.TAG, "[COMMUNICATION THREAD] Waiting for parameters from client (city / information type!");
-            String city = bufferedReader.readLine();
+            String urlAddress = bufferedReader.readLine();
             String informationType = bufferedReader.readLine();
-            if (city == null || city.isEmpty() || informationType == null || informationType.isEmpty()) {
+            if (urlAddress == null || urlAddress.isEmpty() || informationType == null || informationType.isEmpty()) {
                 Log.e(Constants.TAG, "[COMMUNICATION THREAD] Error receiving parameters from client (city / information type!");
                 return;
             }
-            HashMap<String, WeatherForecastInformation> data = serverThread.getData();
-            WeatherForecastInformation weatherForecastInformation = null;
-            if (data.containsKey(city)) {
+            HashMap<String, URLInformation> data = serverThread.getData();
+            URLInformation urlInformation = null;
+            if (data.containsKey(urlAddress)) {
                 Log.i(Constants.TAG, "[COMMUNICATION THREAD] Getting the information from the cache...");
-                weatherForecastInformation = data.get(city);
+                urlInformation = data.get(urlAddress);
             } else {
                 Log.i(Constants.TAG, "[COMMUNICATION THREAD] Getting the information from the webservice...");
                 HttpClient httpClient = new DefaultHttpClient();
-                HttpPost httpPost = new HttpPost(Constants.WEB_SERVICE_ADDRESS);
+                HttpPost httpPost = new HttpPost(urlAddress);
                 List<NameValuePair> params = new ArrayList<>();
-                params.add(new BasicNameValuePair(Constants.QUERY_ATTRIBUTE, city));
+                params.add(new BasicNameValuePair(Constants.QUERY_ATTRIBUTE, urlAddress));
                 UrlEncodedFormEntity urlEncodedFormEntity = new UrlEncodedFormEntity(params, HTTP.UTF_8);
                 httpPost.setEntity(urlEncodedFormEntity);
                 ResponseHandler<String> responseHandler = new BasicResponseHandler();
@@ -89,46 +90,21 @@ public class CommunicationThread extends Thread {
                         scriptData = scriptData.substring(position);
                         JSONObject content = new JSONObject(scriptData);
                         JSONObject currentObservation = content.getJSONObject(Constants.CURRENT_OBSERVATION);
-                        String temperature = currentObservation.getString(Constants.TEMPERATURE);
-                        String windSpeed = currentObservation.getString(Constants.WIND_SPEED);
-                        String condition = currentObservation.getString(Constants.CONDITION);
-                        String pressure = currentObservation.getString(Constants.PRESSURE);
-                        String humidity = currentObservation.getString(Constants.HUMIDITY);
-                        weatherForecastInformation = new WeatherForecastInformation(
-                                temperature, windSpeed, condition, pressure, humidity
+                        String URL = currentObservation.getString("URL");
+                        String body = currentObservation.getString("body");
+                        urlInformation = new URLInformation(
+                                URL, body
                         );
-                        serverThread.setData(city, weatherForecastInformation);
+                        serverThread.setData(urlAddress, urlInformation);
                         break;
                     }
                 }
             }
-            if (weatherForecastInformation == null) {
-                Log.e(Constants.TAG, "[COMMUNICATION THREAD] Weather Forecast Information is null!");
+            if (urlInformation == null) {
+                Log.e(Constants.TAG, "[COMMUNICATION THREAD] Body Information is null!");
                 return;
             }
-            String result = null;
-            switch(informationType) {
-                case Constants.ALL:
-                    result = weatherForecastInformation.toString();
-                    break;
-                case Constants.TEMPERATURE:
-                    result = weatherForecastInformation.getTemperature();
-                    break;
-                case Constants.WIND_SPEED:
-                    result = weatherForecastInformation.getWindSpeed();
-                    break;
-                case Constants.CONDITION:
-                    result = weatherForecastInformation.getCondition();
-                    break;
-                case Constants.HUMIDITY:
-                    result = weatherForecastInformation.getHumidity();
-                    break;
-                case Constants.PRESSURE:
-                    result = weatherForecastInformation.getPressure();
-                    break;
-                default:
-                    result = "[COMMUNICATION THREAD] Wrong information type (all / temperature / wind_speed / condition / humidity / pressure)!";
-            }
+                  String result = urlInformation.toString();
             printWriter.println(result);
             printWriter.flush();
         } catch (IOException ioException) {

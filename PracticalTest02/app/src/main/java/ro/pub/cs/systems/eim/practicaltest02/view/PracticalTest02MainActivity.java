@@ -79,7 +79,7 @@ public class PracticalTest02MainActivity extends AppCompatActivity {
             weatherForecastTextView.setText(Constants.EMPTY_STRING);
 
             clientThread = new ClientThread(
-                    clientAddress, Integer.parseInt(clientPort), city, informationType, weatherForecastTextView
+                    clientAddress, Integer.parseInt(clientPort), city, weatherForecastTextView
             );
             clientThread.start();
         }
